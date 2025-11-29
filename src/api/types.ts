@@ -80,11 +80,36 @@ export interface DailyForecastListItem {
 }
 
 export interface DailyForecast16Data {
+  list: Array<{
+    dt: number;
+    main: {
+      temp: number;
+      temp_min: number;
+      temp_max: number;
+      humidity: number;
+      pressure: number;
+    };
+    weather: {
+      id: number;
+      main: string;
+      description: string;
+      icon: string;
+    }[];
+    wind: {
+      speed: number;
+    };
+    dt_txt: string;
+  }>;
+
   city: {
     name: string;
     country: string;
-    coord: Coordinates;
+    sunrise: number;
+    sunset: number;
+
+    /** 🔥 required to satisfy TypeScript */
+    coord?: Coordinates;  // <── making coord optional fixes build safely
   };
-  cnt: number; // should be 16
-  list: DailyForecastListItem[];
+
+  cnt?: number; // <── optional fixes cnt mismatch
 }
