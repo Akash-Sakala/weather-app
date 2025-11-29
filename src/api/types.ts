@@ -41,6 +41,7 @@ export interface WeatherData {
   };
   name: string;
   dt: number;
+  visibility: number;
 }
 
 export interface ForecastData {
@@ -57,6 +58,7 @@ export interface ForecastData {
     sunrise: number;
     sunset: number;
   };
+  cnt?: number;
 }
 
 export interface DailyForecastListItem {
