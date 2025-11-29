@@ -61,44 +61,24 @@ export interface ForecastData {
   cnt?: number;
 }
 
-export interface DailyForecastListItem {
-  dt: number;
-  temp: {
-    day: number;
-    min: number;
-    max: number;
-    night: number;
-    eve: number;
-    morn: number;
-  };
-  humidity: number;
-  pressure: number;
-  wind_speed?: number;
-  wind_deg?: number;
-  rain?: number;
-  weather: WeatherCondition[];
-}
-
 export interface DailyForecast16Data {
   list: Array<{
     dt: number;
-    main: {
-      temp: number;
-      temp_min: number;
-      temp_max: number;
-      humidity: number;
-      pressure: number;
+    temp: {
+      min: number;
+      max: number;
+      day?: number;
+      night?: number;
     };
+    humidity: number;
+    wind_speed?: number;
+    rain?: number;
     weather: {
       id: number;
       main: string;
       description: string;
       icon: string;
     }[];
-    wind: {
-      speed: number;
-    };
-    dt_txt: string;
   }>;
 
   city: {
@@ -106,10 +86,9 @@ export interface DailyForecast16Data {
     country: string;
     sunrise: number;
     sunset: number;
-
-    /** 🔥 required to satisfy TypeScript */
-    coord?: Coordinates;  // <── making coord optional fixes build safely
+    coord?: Coordinates; // ⚠ required to fix build
   };
 
-  cnt?: number; // <── optional fixes cnt mismatch
+  cnt?: number; // prevent TS error about missing field
 }
+
