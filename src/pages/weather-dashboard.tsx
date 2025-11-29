@@ -2,8 +2,8 @@ import {
   useForecastQuery,
   useReverseGeocodeQuery,
   useWeatherQuery,
-  useDailyForecast16
-} from "@/hooks/use-weather";     // 🔥 ensure hook is exported
+  useDailyForecast16,
+} from "@/hooks/use-weather";
 
 import { CurrentWeather } from "../components/current-weather";
 import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
@@ -15,16 +15,17 @@ import { WeatherForecast } from "../components/weather-forecast";
 import { HourlyTemperature } from "../components/hourly-temprature";
 import WeatherSkeleton from "../components/loading-skeleton";
 import { FavoriteCities } from "@/components/favorite-cities";
+import { PlantLandingHero } from "@/components/plant-landing-hero";
+import { WeatherMap } from "@/components/weather-map";   // <== MAP IMPORT
 
 export function WeatherDashboard() {
   const { coordinates, error: locationError, isLoading: locationLoading, getLocation } = useGeolocation();
 
-  const weatherQuery   = useWeatherQuery(coordinates);       // current
-  const forecastQuery  = useForecastQuery(coordinates);      // 3-hour 5-day
-  const dailyQuery     = useDailyForecast16(coordinates);    // 🌾 16-day agri
-  const locationQuery  = useReverseGeocodeQuery(coordinates);
+  const weatherQuery = useWeatherQuery(coordinates);
+  const forecastQuery = useForecastQuery(coordinates);
+  const dailyQuery = useDailyForecast16(coordinates);
+  const locationQuery = useReverseGeocodeQuery(coordinates);
 
-  // Refresh all
   const handleRefresh = () => {
     getLocation();
     if (coordinates) {
@@ -35,84 +36,111 @@ export function WeatherDashboard() {
     }
   };
 
-  // loading & location errors
+  // -------------------------------- UI STATES -------------------------------- //
+
   if (locationLoading) return <WeatherSkeleton />;
-  if (locationError)
+
+  if (locationError) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Location Error</AlertTitle>
-        <AlertDescription className="flex flex-col gap-4">
+        <AlertDescription>
           <p>{locationError}</p>
-          <Button variant="outline" onClick={getLocation}>
+          <Button variant="outline" onClick={getLocation} className="mt-2">
             <MapPin className="mr-2 h-4 w-4" /> Enable Location
           </Button>
         </AlertDescription>
       </Alert>
     );
+  }
 
-  if (!coordinates)
+  if (!coordinates) {
     return (
       <Alert>
-        <MapPin className="h-4 w-4" />
         <AlertTitle>Location Required</AlertTitle>
-        <AlertDescription className="flex flex-col gap-4">
-          <p>Please enable location access to continue</p>
-          <Button variant="outline" onClick={getLocation}>
+        <AlertDescription>
+          Please turn on GPS and refresh.
+          <Button onClick={getLocation} className="mt-2">
             <MapPin className="mr-2 h-4 w-4" /> Enable Location
           </Button>
         </AlertDescription>
       </Alert>
     );
+  }
 
-  const locationName = locationQuery.data?.[0];
-
-  if (weatherQuery.error || forecastQuery.error || dailyQuery.error)
+  if (weatherQuery.error || forecastQuery.error || dailyQuery.error) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
-        <AlertDescription className="flex flex-col gap-4">
-          <p>Failed to fetch weather data</p>
-          <Button variant="outline" onClick={handleRefresh}>
+        <AlertDescription>
+          Failed to fetch weather data.
+          <Button onClick={handleRefresh} className="mt-2">
             <RefreshCw className="mr-2 h-4 w-4" /> Retry
           </Button>
         </AlertDescription>
       </Alert>
     );
+  }
 
-  if (!weatherQuery.data || !forecastQuery.data || !dailyQuery.data)
-    return <WeatherSkeleton />;
+  if (!weatherQuery.data || !forecastQuery.data || !dailyQuery.data) return <WeatherSkeleton />;
+
+  const locationName = locationQuery.data?.[0];
+
+  // -------------------------------- RENDER UI -------------------------------- //
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 pb-10">
+
+      {/* 🌿 Animated Agriculture Landing Hero */}
+      <PlantLandingHero />
+
       <FavoriteCities />
 
+      {/* Top bar + Refresh */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold tracking-tight">My Field Weather</h1>
         <Button variant="outline" size="icon" onClick={handleRefresh}>
           <RefreshCw
             className={`h-4 w-4 ${
-              weatherQuery.isFetching || forecastQuery.isFetching || dailyQuery.isFetching
-                ? "animate-spin"
-                : ""
+              weatherQuery.isFetching ||
+              forecastQuery.isFetching ||
+              dailyQuery.isFetching
+              ? "animate-spin"
+              : ""
             }`}
           />
         </Button>
       </div>
 
-      {/* layout */}
-      <div className="grid gap-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <CurrentWeather data={weatherQuery.data} locationName={locationName} />
-          <HourlyTemperature data={forecastQuery.data} />  {/* still uses 5-day */}
-        </div>
+      {/* Current Weather + Hourly */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <CurrentWeather data={weatherQuery.data} locationName={locationName} />
+        <HourlyTemperature data={forecastQuery.data} />
+      </div>
 
-        <div className="grid gap-6 md:grid-cols-2 items-start">
-          <WeatherDetails data={weatherQuery.data} />
-          <WeatherForecast data={dailyQuery.data} />    {/* 🌾 NEW */}
+      {/* Weather details + 16-Day Forecast */}
+      <div className="grid gap-6 md:grid-cols-2 items-start">
+        <WeatherDetails data={weatherQuery.data} />
+
+        <div id="agri-forecast" className="scroll-mt-24">
+          <WeatherForecast data={dailyQuery.data} />
         </div>
       </div>
+
+      {/* 🌍 Live + Forecast Weather Radar Map */}
+      <div>
+        <h2 className="text-lg font-semibold text-emerald-300 mb-2">
+          🌍 Live & Forecast Weather Maps
+        </h2>
+        <p className="text-sm text-emerald-400 mb-3">
+          Visualize temperature, rain, wind & cloud movements — including forecast hours.
+        </p>
+
+        <WeatherMap /> {/* <= FULL MAP NOW WORKING */}
+      </div>
+
     </div>
   );
 }
