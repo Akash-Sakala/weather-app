@@ -42,3 +42,13 @@ export function useLocationSearch(query: string) {
     enabled: query.length >= 3,
   });
 }
+
+// 🌿 New Hook — Daily 16-Day Forecast
+export function useDailyForecast16(coordinates: Coordinates | null) {
+  return useQuery({
+    queryKey: ["daily-forecast-16", coordinates],
+    queryFn: () =>
+      coordinates ? weatherAPI.getDailyForecast16(coordinates) : null,
+    enabled: !!coordinates,
+  });
+}

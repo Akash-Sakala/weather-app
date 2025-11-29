@@ -58,3 +58,31 @@ export interface ForecastData {
     sunset: number;
   };
 }
+
+export interface DailyForecastListItem {
+  dt: number;
+  temp: {
+    day: number;
+    min: number;
+    max: number;
+    night: number;
+    eve: number;
+    morn: number;
+  };
+  humidity: number;
+  pressure: number;
+  wind_speed?: number;
+  wind_deg?: number;
+  rain?: number;
+  weather: WeatherCondition[];
+}
+
+export interface DailyForecast16Data {
+  city: {
+    name: string;
+    country: string;
+    coord: Coordinates;
+  };
+  cnt: number; // should be 16
+  list: DailyForecastListItem[];
+}

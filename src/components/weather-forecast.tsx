@@ -1,98 +1,83 @@
+// 🌾 16-Day Agricultural Weather Forecast
+
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { ArrowDown, ArrowUp, Droplets, Wind } from "lucide-react";
+import { ArrowDown, ArrowUp, Droplets, Wind, Sprout } from "lucide-react";
 import { format } from "date-fns";
-import type { ForecastData } from "@/api/types";
+import type { DailyForecast16Data } from "@/api/types";
 
 interface WeatherForecastProps {
-  data: ForecastData;
-}
-
-interface DailyForecast {
-  date: number;
-  temp_min: number;
-  temp_max: number;
-  humidity: number;
-  wind: number;
-  weather: {
-    id: number;
-    main: string;
-    description: string;
-    icon: string;
-  };
+  data: DailyForecast16Data;
 }
 
 export function WeatherForecast({ data }: WeatherForecastProps) {
-  // Group forecast by day and get daily min/max
-  const dailyForecasts = data.list.reduce((acc, forecast) => {
-    const date = format(new Date(forecast.dt * 1000), "yyyy-MM-dd");
+  const days = data.list; // already daily separated
 
-    if (!acc[date]) {
-      acc[date] = {
-        temp_min: forecast.main.temp_min,
-        temp_max: forecast.main.temp_max,
-        humidity: forecast.main.humidity,
-        wind: forecast.wind.speed,
-        weather: forecast.weather[0],
-        date: forecast.dt,
-      };
-    } else {
-      acc[date].temp_min = Math.min(acc[date].temp_min, forecast.main.temp_min);
-      acc[date].temp_max = Math.max(acc[date].temp_max, forecast.main.temp_max);
-    }
-
-    return acc;
-  }, {} as Record<string, DailyForecast>);
-
-  // Get next 5 days
-  const nextDays = Object.values(dailyForecasts).slice(1, 6);
-
-  // Format temperature
-  const formatTemp = (temp: number) => `${Math.round(temp)}°`;
+  const formatTemp = (t: number) => `${Math.round(t)}°`;
 
   return (
-    <Card>
+    <Card className="border-emerald-700/40 bg-gradient-to-b from-emerald-900/70 via-emerald-950/85 to-slate-950">
       <CardHeader>
-        <CardTitle>5-Day Forecast</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-emerald-200">
+          <Sprout className="h-5 w-5 text-green-300" />
+          16-Day Agriculture Forecast
+        </CardTitle>
+        <p className="text-xs text-emerald-300/70 mt-1">
+          Helps in sowing, irrigation, fertilizer spraying & harvesting decisions.
+        </p>
       </CardHeader>
+
       <CardContent>
-        <div className="grid gap-4">
-          {nextDays.map((day) => (
-            <div
-              key={day.date}
-              className="grid grid-cols-3 items-center gap-4 rounded-lg border p-4"
-            >
-              <div>
-                <p className="font-medium">
-                  {format(new Date(day.date * 1000), "EEE, MMM d")}
-                </p>
-                <p className="text-sm text-muted-foreground capitalize">
-                  {day.weather.description}
-                </p>
-              </div>
+        <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-1">
+          {days.map((day, i) => {
+            const date = new Date(day.dt * 1000);
+            const label =
+              i === 0 ? "Today" : i === 1 ? "Tomorrow" : format(date, "EEE");
 
-              <div className="flex justify-center gap-4">
-                <span className="flex items-center text-blue-500">
-                  <ArrowDown className="mr-1 h-4 w-4" />
-                  {formatTemp(day.temp_min)}
-                </span>
-                <span className="flex items-center text-red-500">
-                  <ArrowUp className="mr-1 h-4 w-4" />
-                  {formatTemp(day.temp_max)}
-                </span>
-              </div>
+            return (
+              <div
+                key={day.dt}
+                className="grid grid-cols-[1.4fr,1.2fr,1.6fr] items-center gap-3 rounded-xl border border-emerald-700/50 bg-emerald-950/60 px-3 py-2.5 shadow-sm"
+              >
+                {/* date */}
+                <div>
+                  <p className="font-semibold text-emerald-50">
+                    {label} · {format(date, "MMM d")}
+                  </p>
+                  <p className="text-xs text-emerald-200/80 capitalize">
+                    {day.weather[0].description}
+                  </p>
+                </div>
 
-              <div className="flex justify-end gap-4">
-                <span className="flex items-center gap-1">
-                  <Droplets className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">{day.humidity}%</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <Wind className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">{day.wind}m/s</span>
-                </span>
+                {/* temp */}
+                <div className="flex justify-center gap-4 text-xs">
+                  <span className="flex items-center text-blue-400">
+                    <ArrowDown className="mr-1 h-3 w-3" />
+                    {formatTemp(day.temp.min)}
+                  </span>
+                  <span className="flex items-center text-amber-400">
+                    <ArrowUp className="mr-1 h-3 w-3" />
+                    {formatTemp(day.temp.max)}
+                  </span>
+                </div>
+
+                {/* agro factors */}
+                <div className="flex flex-wrap justify-end gap-3 text-[11px]">
+                  <span className="flex items-center gap-1 text-emerald-100">
+                    <Droplets className="h-3 w-3" /> {day.humidity}% RH
+                  </span>
+                  <span className="flex items-center gap-1 text-emerald-100">
+                    <Wind className="h-3 w-3" /> {day.wind_speed?.toFixed(1)} m/s
+                  </span>
+
+                  {day.rain && (
+                    <span className="rounded-full bg-emerald-900/80 px-2 py-[2px] text-emerald-100">
+                      Rain: {day.rain.toFixed(1)} mm
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

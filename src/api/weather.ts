@@ -62,6 +62,19 @@ class WeatherAPI {
     });
     return this.fetchData<GeocodingResponse[]>(url);
   }
+
+
+  // 🌿 New → 16-Day Forecast Daily Data
+  async getDailyForecast16({ lat, lon }: Coordinates): Promise<import("./types").DailyForecast16Data> {
+    const url = this.createUrl(`${API_CONFIG.BASE_URL}/forecast/daily`, {
+      lat: lat.toString(),
+      lon: lon.toString(),
+      units: "metric",
+      cnt: "16",
+    });
+
+    return this.fetchData(url);
+  }
 }
 
 export const weatherAPI = new WeatherAPI();
