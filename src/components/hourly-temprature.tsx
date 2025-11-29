@@ -24,7 +24,7 @@ export function HourlyTemperature({ data }: HourlyTemperatureProps) {
   // Get today's forecast data and format for chart
 
   const chartData: ChartData[] = data.list
-    .slice(0, 8) // Get next 24 hours (3-hour intervals)
+    .slice(0, 24) // Get next 24 hours (3-hour intervals)
     .map((item) => ({
       time: format(new Date(item.dt * 1000), "ha"),
       temp: Math.round(item.main.temp),

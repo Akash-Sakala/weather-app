@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import DisasterAlertPortal from "./disaster-alert-portal"
 import { CitySearch } from "./city-search";
 import { ThemeToggle } from "./theme-toggle";
 import { useTheme } from "@/context/theme-provider";
@@ -11,13 +12,14 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to={"/"}>
           <img
-            src={theme === "dark" ? "/logo.png" : "/logo2.png"}
+            src={theme === "dark" ? "/agriqnet2.jpg" : "/agriqnet.jpg"}
             alt="Klimate logo"
             className="h-14"
           />
         </Link>
 
         <div className="flex gap-4">
+          <DisasterAlertPortal />
           <CitySearch />
           <ThemeToggle />
         </div>
