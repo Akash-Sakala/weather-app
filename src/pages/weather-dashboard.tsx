@@ -19,7 +19,7 @@ import { WeatherMap } from "@/components/weather-map";
 
 export function WeatherDashboard() {
 
-  const { coordinates, error: locationError, isLoading, getLocation } = useGeolocation();
+  const { coordinates, isLoading, getLocation } = useGeolocation();
   const weatherQuery = useWeatherQuery(coordinates);
   const forecastQuery = useForecastQuery(coordinates);
   const dailyQuery = useDailyForecast16(coordinates);

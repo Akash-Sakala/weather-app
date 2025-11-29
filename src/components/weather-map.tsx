@@ -178,7 +178,6 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { weatherAPI } from "@/api/weather";
-import type { WeatherData, ForecastData } from "@/api/types";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import L from "leaflet";
 
@@ -187,83 +186,66 @@ const markerIcon = new L.Icon({
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
   iconSize: [26, 42],
-  iconAnchor: [13, 42]
+  iconAnchor: [13, 42],
 });
 
-// Smooth fly-to
-function FlyTo({ lat, lon }: {lat:number, lon:number}) {
+// Auto fly utility
+function FlyTo({ lat, lon }: { lat: number; lon: number }) {
   const map = useMap();
-  useEffect(()=> map.flyTo([lat,lon], 9, {duration:1.2}), [lat,lon]);
+    useEffect(() => {
+    if (!map) return;
+
+    map.flyTo([lat, lon], 10, {
+        duration: 1.5
+    });
+
+    }, [lat, lon, map]);
   return null;
 }
 
 export function WeatherMap() {
   const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-  const { coordinates, getLocation } = useGeolocation();
+  const { coordinates,  } = useGeolocation();
 
-  const [query,setQuery] = useState("");
-  const [results,setResults] = useState<any[]>([]);
-  const [loc,setLoc] = useState<{lat:number,lon:number}|null>(null);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [loc, setLoc] = useState<{ lat: number; lon: number } | null>(null);
 
-  const [current,setCurrent] = useState<WeatherData|null>(null);
-  const [future,setFuture] = useState<ForecastData|null>(null);
-
-  // Search
-  async function searchPlace(){
+  async function searchPlace() {
     const r = await weatherAPI.searchLocations(query);
     setResults(r);
-    if(r.length>0) setLoc({lat:r[0].lat, lon:r[0].lon});
-    setQuery("");
+    if (r.length) setLoc({ lat: r[0].lat, lon: r[0].lon });
   }
 
-  // Fetch data when location updates
-  useEffect(()=>{
-    const t = loc ?? coordinates;
-    if(!t) return;
-
-    (async()=>{
-      setCurrent(await weatherAPI.getCurrentWeather(t));
-      setFuture(await weatherAPI.getForecast(t));
-    })();
-  },[loc,coordinates]);
-
-  if(!loc && !coordinates)
-    return (
-      <div className="text-center p-6 text-white">
-        <h2>Select location to view map</h2>
-        <button className="p-2 bg-blue-500 rounded mt-2" onClick={getLocation}>
-          📍 Use My Location
-        </button>
-      </div>
-    );
-
-  const point = loc ?? coordinates;
+  // Fallback point
+  const point = loc ?? coordinates ?? { lat: 20.5937, lon: 78.9629 };
 
   return (
-    <div className="p-5 bg-emerald-950/40 border border-emerald-500 rounded-xl shadow-lg mt-4">
-
+    <div className="p-5 bg-emerald-950/40 border border-emerald-600 rounded-xl mt-6">
+      
       {/* Search */}
       <div className="flex gap-2 mb-3">
         <input
           value={query}
           placeholder="Search city..."
-          onKeyDown={e=>e.key==="Enter" && searchPlace()}
-          onChange={e=>setQuery(e.target.value)}
-          className="bg-emerald-800 text-white px-2 py-1 rounded"
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && searchPlace()}
+          className="px-2 py-1 rounded bg-emerald-800 text-white"
         />
-        <button onClick={searchPlace} className="bg-lime-400 px-3 py-1 rounded text-black font-semibold">
+        <button onClick={searchPlace} className="bg-lime-400 px-3 py-1 rounded text-black font-bold">
           🔍
         </button>
-        <button onClick={()=>setLoc(coordinates!)} className="bg-blue-500 text-white px-3 py-1 rounded">
-          📍 Use GPS
+        <button onClick={() => setLoc(coordinates!)} className="bg-blue-500 text-white px-3 py-1 rounded">
+          📍 My Location
         </button>
       </div>
 
-      {results.length>0 && (
+      {/* Suggestions */}
+      {results.length > 0 && (
         <div className="bg-emerald-900 p-2 rounded text-white">
-          {results.map(r=>(
+          {results.map((r) => (
             <p key={r.lat} className="cursor-pointer hover:bg-emerald-700 p-1"
-              onClick={()=>{ setLoc({lat:r.lat,lon:r.lon}); setResults([]); }}>
+              onClick={() => { setLoc({ lat: r.lat, lon: r.lon }); setResults([]); }}>
               {r.name}, {r.state || ""}, {r.country}
             </p>
           ))}
@@ -271,17 +253,21 @@ export function WeatherMap() {
       )}
 
       {/* MAP */}
-      <MapContainer center={[point.lat,point.lon]} zoom={8} style={{height:"65vh"}}>
-        <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"/>
+      <MapContainer center={[point.lat, point.lon]} zoom={8} style={{ height: "65vh" }}>
+        <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        {/* Temperature Overlay */}
         <TileLayer
           url={`https://maps.openweathermap.org/maps/2.0/weather/TA2/{z}/{x}/{y}?appid=${API_KEY}`}
           opacity={0.65}
         />
-        <FlyTo lat={point.lat} lon={point.lon}/>
-        <Marker position={[point.lat,point.lon]} icon={markerIcon}>
-          <Popup>Selected Location</Popup>
+
+        <FlyTo lat={point.lat} lon={point.lon} />
+        <Marker position={[point.lat, point.lon]} icon={markerIcon}>
+          <Popup>Weather Point</Popup>
         </Marker>
       </MapContainer>
     </div>
   );
 }
+
