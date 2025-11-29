@@ -1,108 +1,97 @@
 // src/components/plant-landing-hero.tsx
 
-import { Button } from "./ui/button";
-import { Leaf, Sprout, Droplets, Wind } from "lucide-react";
+import { useState } from "react";
+import { Sprout, Droplets, Wind, Stethoscope } from "lucide-react";
+import { generateAgriAdvice } from "@/api/agri-advisor";
+import type { WeatherData, ForecastData } from "@/api/types";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-export function PlantLandingHero() {
-  const handleScrollToForecast = () => {
-    const el = document.getElementById("agri-forecast");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+interface Props {
+  weather: WeatherData | null;
+  forecast: ForecastData | null;
+}
+
+export function PlantLandingHero({ weather, forecast }: Props) {
+  const [result, setResult] = useState<string>("");
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const triggerAI = async (type: string) => {
+    if (!weather || !forecast) return;
+    setLoading(type);
+    const rain5 = forecast.list.slice(0, 5).map(d => d.main.humidity); // proxy rain since API lacks mm
+    const advice = await generateAgriAdvice(type, {
+      temp: weather.main.temp,
+      humidity: weather.main.humidity,
+      wind: weather.wind.speed,
+      pressure: weather.main.pressure,
+      vis: weather.visibility,
+      rain: rain5,
+    });
+    setLoading(null);
+    setResult(advice);
+    document.getElementById("agri-ai-box")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-emerald-700/40 bg-gradient-to-br from-emerald-900 via-emerald-950 to-slate-950 px-6 py-6 sm:px-8 sm:py-8 mb-2">
-      {/* background image overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-20 mix-blend-soft-light bg-cover bg-center"
-        style={{ backgroundImage: "url('/agriqnet2.jpg')" }}
-      />
+    <section className="relative overflow-hidden rounded-3xl border border-emerald-700/40 bg-gradient-to-br from-emerald-900 via-emerald-950 to-slate-950 px-6 py-6 sm:px-8 sm:py-8">
 
-      {/* floating leaf orbs */}
-      <div className="pointer-events-none absolute -right-8 -top-6 h-28 w-28 rounded-full border border-emerald-500/40 bg-emerald-500/10 blur-sm animate-pulse" />
-      <div className="pointer-events-none absolute -left-10 bottom-0 h-24 w-24 rounded-full border border-lime-500/40 bg-lime-500/10 blur-sm animate-ping" />
+      {/* Glow Orbs */}
+      <div className="absolute -right-8 -top-6 h-28 w-28 bg-lime-500/10 blur-2xl rounded-full" />
+      <div className="absolute -left-10 bottom-0 h-24 w-24 bg-emerald-500/10 blur-xl rounded-full" />
 
-      <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        {/* left content */}
-        <div className="max-w-xl space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-900/80 px-3 py-1 text-xs font-medium text-emerald-200 border border-emerald-700/60">
-            <Leaf className="h-3.5 w-3.5" />
-            Smart field weather · 16-day outlook
-          </div>
+      <div className="relative z-10">
 
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-emerald-50">
-            Plan your crops with{" "}
-            <span className="bg-gradient-to-r from-lime-300 via-emerald-200 to-amber-200 bg-clip-text text-transparent">
-              plant-aware weather
-            </span>
-          </h1>
+        {/* Title */}
+        <h1 className="text-3xl sm:text-4xl font-bold text-lime-200 drop-shadow mb-3">
+          🌾 Smart Farm Decisions Powered by AI
+        </h1>
+        <p className="text-emerald-100/80 max-w-xl mb-5">
+          Get scientifically-backed farm planning insights using realtime weather + 16-day forecast.
+        </p>
 
-          <p className="text-sm sm:text-base text-emerald-100/80">
-            AgriQnet helps you time sowing, irrigation, and spraying using
-            hyper-local forecasts and a 16-day outlook tailored for fields,
-            not cities.
-          </p>
+        {/* --- AI Action Buttons --- */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-xl">
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              size="sm"
-              className="bg-lime-500 hover:bg-lime-600 text-emerald-950 shadow-md shadow-lime-500/30"
-              onClick={handleScrollToForecast}
-            >
-              View 16-day field forecast
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-emerald-400/70 text-emerald-50 bg-emerald-900/40 hover:bg-emerald-800/60"
-              onClick={handleScrollToForecast}
-            >
-              Check next rain window
-            </Button>
-          </div>
+          <button onClick={() => triggerAI("Sowing Window")}
+            className="px-3 py-3 bg-neutral-900/40 backdrop-blur text-emerald-200 border border-lime-400/40 rounded-xl hover:bg-lime-600/10">
+            <Sprout className="inline w-4 h-4 mr-1 text-lime-300"/> Sowing Window
+          </button>
+
+          <button onClick={() => triggerAI("Irrigation Planner")}
+            className="px-3 py-3 bg-neutral-900/40 text-sky-200 border border-sky-400/40 rounded-xl hover:bg-sky-600/10">
+            <Droplets className="inline w-4 h-4 mr-1 text-sky-300"/> Irrigation Planner
+          </button>
+
+          <button onClick={() => triggerAI("Spray Safety")}
+            className="px-3 py-3 bg-neutral-900/40 text-cyan-200 border border-cyan-400/40 rounded-xl hover:bg-cyan-600/10">
+            <Wind className="inline w-4 h-4 mr-1 text-cyan-300"/> Spray Safety
+          </button>
+
+          <button onClick={() => triggerAI("Crop Health")}
+            className="px-3 py-3 bg-neutral-900/40 text-emerald-200 border border-green-400/40 rounded-xl hover:bg-green-600/10">
+            <Stethoscope className="inline w-4 h-4 mr-1 text-green-300"/> Crop Health
+          </button>
         </div>
 
-        {/* right side chips */}
-        <div className="mt-4 grid w-full max-w-sm grid-cols-2 gap-3 text-xs text-emerald-50 lg:mt-0">
-          <div className="rounded-2xl border border-emerald-700/60 bg-emerald-950/70 px-3 py-3 flex flex-col gap-1 animate-[pulse_3s_ease-in-out_infinite]">
-            <div className="flex items-center gap-2">
-              <Sprout className="h-4 w-4 text-lime-300" />
-              <span className="font-semibold">Sowing window</span>
-            </div>
-            <p className="text-[11px] text-emerald-200/80">
-              Match seed sowing with soil moisture, temp and rain-free days.
-            </p>
-          </div>
+        {/* AI Response Box */}
+        {loading && (
+          <p className="text-emerald-200 mt-4 animate-pulse text-sm">Thinking like an agronomist...</p>
+        )}
 
-          <div className="rounded-2xl border border-emerald-700/60 bg-emerald-950/70 px-3 py-3 flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <Droplets className="h-4 w-4 text-sky-300" />
-              <span className="font-semibold">Irrigation planner</span>
-            </div>
-            <p className="text-[11px] text-emerald-200/80">
-              Skip irrigation when rain is coming, save diesel & groundwater.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-700/60 bg-emerald-950/70 px-3 py-3 flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <Wind className="h-4 w-4 text-cyan-300" />
-              <span className="font-semibold">Spray safety</span>
-            </div>
-            <p className="text-[11px] text-emerald-200/80">
-              Avoid spraying on high-wind or high-rain days to reduce drift.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-700/60 bg-emerald-950/70 px-3 py-3 flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <Leaf className="h-4 w-4 text-emerald-300" />
-              <span className="font-semibold">Crop health</span>
-            </div>
-            <p className="text-[11px] text-emerald-200/80">
-              Monitor humidity & heat that drive pest and disease outbreaks.
-            </p>
-          </div>
+        {/* ====================== AI RESULT MARKDOWN ====================== */}
+        {result && (
+        <div 
+            id="agri-ai-box"
+            className="mt-6 p-5 rounded-xl bg-emerald-950/70 border border-lime-400/40 max-w-2xl text-emerald-100 shadow-xl prose prose-invert prose-sm leading-relaxed"
+        >
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {result}
+            </ReactMarkdown>
         </div>
+        )}
+
+
       </div>
     </section>
   );
